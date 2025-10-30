@@ -1,0 +1,34 @@
+# //  Questa Sim-64
+# //  Version 2025.3 linux_x86_64 Sep 15 2025
+# //
+# // Unpublished work. Copyright 2025 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# ** Note: (vsim-220) '/tools/siemens/questa_2025.3/questasim/linux_x86_64/../modelsim.ini' is used as the ini file.
+# vsim "+permissive" -64 -work /data/luca.colombo/snitch_cluster/target/sim/build/work-vsim -t 1ps -do "run -a" -quiet -ldflags "-Wl,-rpath,/data/luca.colombo/snitch_cluster/target/sim/build/work/lib -L/data/luca.colombo/snitch_cluster/target/sim/build/work/lib -lfesvr -lutil" tb_bin_opt "+permissive-off" "++/data/luca.colombo/snitch_cluster/sw/kernels/blas/axpy/build/axpy.elf" "++" 
+# Start time: 12:39:53 on Oct 30,2025
+# run -a
+# [Tracer] Logging Hart          0 to logs/trace_hart_00000.dasm
+# [Tracer] Logging Hart          1 to logs/trace_hart_00001.dasm
+# [Tracer] Logging Hart          2 to logs/trace_hart_00002.dasm
+# [Tracer] Logging Hart          3 to logs/trace_hart_00003.dasm
+# [Tracer] Logging Hart          4 to logs/trace_hart_00004.dasm
+# [Tracer] Logging Hart          5 to logs/trace_hart_00005.dasm
+# [Tracer] Logging Hart          6 to logs/trace_hart_00006.dasm
+# [Tracer] Logging Hart          7 to logs/trace_hart_00007.dasm
+# [iDMA Tracer] Logging gen_backend[c].i_idma_backend_rw_axi to dma_trace_00008_00000.log
+# [Tracer] Logging Hart          8 to logs/trace_hart_00008.dasm
+# [NarrowAxi] Writing entry point 80000000 to scratch1
+# [NarrowAxi] Setting Cluster Clint interrupt
+# Break key hit
+# Simulation stop requested.
+# End time: 12:40:17 on Oct 30,2025, Elapsed time: 0:00:24
+# Errors: 0, Warnings: 0

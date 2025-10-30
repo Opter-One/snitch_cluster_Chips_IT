@@ -102,6 +102,7 @@ SN_APPS += $(SN_ROOT)/sw/kernels/misc/box3d1r
 SN_APPS += $(SN_ROOT)/sw/kernels/misc/j3d27pt
 SN_APPS += $(SN_ROOT)/sw/benchmarks/axpy
 SN_APPS += $(SN_ROOT)/sw/benchmarks/matrix_mult
+SN_APPS += $(SN_ROOT)/sw/benchmarks/dot_product
 endif
 
 # Include Makefile from each app subdirectory
