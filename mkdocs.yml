@@ -1,0 +1,85 @@
+# Copyright 2020 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+site_name: Snitch Cluster
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+repo_url: https://github.com/pulp-platform/snitch_cluster
+repo_name: pulp-platform/snitch_cluster
+markdown_extensions:
+  - admonition
+  - def_list
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc
+plugins:
+  - exclude:
+      glob:
+        - generated/peripherals.md
+        - rm/runtime.md
+  - include-markdown
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - util/sim
+            - util/trace
+            - util/bench
+            - util/experiments
+  - macros:
+      on_error_fail: true
+use_directory_urls: false
+extra:
+  repo: snitch_cluster
+  branch: main
+nav:
+  - Home: index.md
+  - User Guide:
+      - Getting Started: ug/getting_started.md
+      - Repository Structure: ug/directory_structure.md
+      - Tutorial:
+          - Base: ug/tutorial.md
+          - Advanced:
+              - Trace Analysis: ug/trace_analysis.md
+              - Code Optimization: ug/code_optimization.md
+      - System Integration: ug/system_integration.md
+      - Documentation: ug/documentation.md
+  - Reference Manual:
+      - Hardware:
+          - Snitch: rm/hw/snitch.md
+          - Snitch Cluster:
+              - Overview: rm/hw/snitch_cluster.md
+              - Peripherals: rm/hw/peripherals.md
+          - Reqrsp Interface: rm/hw/reqrsp_interface.md
+          - Custom Instructions: rm/hw/custom_instructions.md
+          - Boot Procedure: rm/hw/boot_procedure.md
+      - Software:
+          - Simulation Utilities:
+              - data_utils: rm/sw/sim/data_utils.md
+              - verif_utils: rm/sw/sim/verif_utils.md
+              - sim_utils: rm/sw/sim/sim_utils.md
+              - rm/sw/sim/Simulation.md
+              - rm/sw/sim/Simulator.md
+              - rm/sw/sim/Elf.md
+          - Trace Utilities:
+              - gen_trace.py: rm/sw/trace/gen_trace.md
+              - annotate.py: rm/sw/trace/annotate.md
+              - events.py: rm/sw/trace/events.md
+          - Benchmarking Utilities:
+              - join.py: rm/sw/bench/join.md
+              - roi.py: rm/sw/bench/roi.md
+              - visualize.py: rm/sw/bench/visualize.md
+          - Experiment Utilities:
+              - run.py: rm/sw/experiments/run.md
+              - build.py: rm/sw/experiments/build.md
+          - Snitch Runtime: doxygen/html/index.html
+  - Publications: publications.md

@@ -1,0 +1,45 @@
+Metadata-Version: 2.4
+Name: snitch
+Version: 0.0.0
+Author-email: Luca Colagrande <colluca@iis.ee.ethz.ch>
+License-File: LICENSE
+Requires-Dist: dataclasses
+Requires-Dist: flake8
+Requires-Dist: gitpython
+Requires-Dist: humanize
+Requires-Dist: json5
+Requires-Dist: jsonref
+Requires-Dist: jsonschema
+Requires-Dist: mako
+Requires-Dist: matplotlib
+Requires-Dist: pandas
+Requires-Dist: peakrdl
+Requires-Dist: peakrdl-markdown
+Requires-Dist: peakrdl-rawheader@ git+https://github.com/colluca/PeakRDL-rawheader.git@7b8dbc9ad5854dc1cdaf36d4ea024c29ffb00a4c
+Requires-Dist: prettytable
+Requires-Dist: progressbar2
+Requires-Dist: psutil
+Requires-Dist: pyelftools
+Requires-Dist: pyflexfloat
+Requires-Dist: pymakeutils
+Requires-Dist: pytablewriter
+Requires-Dist: pytest
+Requires-Dist: pyyaml
+Requires-Dist: tabulate
+Requires-Dist: termcolor
+Requires-Dist: yamllint
+Provides-Extra: kernels
+Requires-Dist: numpy; extra == "kernels"
+Requires-Dist: scikit-learn; extra == "kernels"
+Requires-Dist: torch; extra == "kernels"
+Provides-Extra: docs
+Requires-Dist: mkdocs; extra == "docs"
+Requires-Dist: mkdocs-exclude; extra == "docs"
+Requires-Dist: mkdocs-include-markdown-plugin; extra == "docs"
+Requires-Dist: mkdocs-macros-plugin; extra == "docs"
+Requires-Dist: mkdocs-material; extra == "docs"
+Requires-Dist: mkdocstrings; extra == "docs"
+Requires-Dist: mkdocstrings-python; extra == "docs"
+Provides-Extra: all
+Requires-Dist: snitch[docs,kernels]; extra == "all"
+Dynamic: license-file

@@ -1,0 +1,8 @@
+my_env/
+*.pyc
+__pycache__/
+.venv/
+venv/
+.bender/
+logs/
+my_env/

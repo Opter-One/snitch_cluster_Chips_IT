@@ -1,0 +1,126 @@
+# Copyright 2023 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Run all lint checks
+name: lint
+on: [push, pull_request]
+
+jobs:
+
+  ################
+  # Verible Lint #
+  ################
+  verible-lint:
+    name: Lint Verilog sources
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chipsalliance/verible-linter-action@main
+        with:
+          paths: |
+            ./hw
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: true
+          reviewdog_reporter: github-check
+          extra_args: "--waiver_files util/lint/waiver.verible"
+          verible_version: "v0.0-3318-g8d254167"
+
+  #####################
+  # Vendor Up-to-Date #
+  #####################
+  bender-vendor-up-to-date:
+    name: Check bender vendor up-to-date
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - name: Check bender vendor up-to-date
+        uses: pulp-platform/pulp-actions/bender-vendor-up-to-date@v2.1.0
+
+  #################
+  # Check License #
+  #################
+  license-lint:
+    name: Check License headers
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - name: Check License
+        uses: pulp-platform/pulp-actions/lint-license@v2.4.3
+        with:
+          linters_revision: 20250217_01
+          # We cover ETH Zurich and lowRISC licenses and Apache 2.0
+          # (mostly for SW) and Solderpad for the hardware.
+          # yamllint disable rule:line-length
+          license: |
+            Copyright (\d{4}(-\d{4})?\s)?(ETH Zurich and University of Bologna|lowRISC contributors).
+            (Solderpad Hardware License, Version 0.51|Licensed under the Apache License, Version 2.0), see LICENSE for details.
+            SPDX-License-Identifier: (SHL-0.51|Apache-2.0)
+          # yamllint enable rule:line-length
+          match_regex: true
+          exclude_paths: |
+            sw/runtime/src/omp/interface.h
+            hw/snitch_cluster/src/snitch_cluster_peripheral/snitch_cluster_peripheral_reg_pkg.sv
+            hw/snitch_cluster/src/snitch_cluster_peripheral/snitch_cluster_peripheral_reg.sv
+            hw/snitch_cluster/src/snitch_cluster_peripheral/snitch_cluster_peripheral_reg.svh
+
+  ##################
+  # Lint YML Files #
+  ##################
+  yaml-lint:
+    name: Lint YAML Sources
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - uses: actions/checkout@v4
+      - name: yaml-lint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: util/lint/.yamllint.yml
+
+  ########################
+  # Check Python Sources #
+  ########################
+  python-lint:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+    name: Lint Python Sources
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+        with:
+          flake8-version: "6.0.0"
+          max-line-length: "100"
+
+  ######################
+  # Clang-Format Check #
+  ######################
+  # Check C/C++ files for correct formatting.
+  clangfmt:
+    name: Lint C/C++ Sources
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DoozyX/clang-format-lint-action@v0.18.2
+        with:
+          clangFormatVersion: 10
