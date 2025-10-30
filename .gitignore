@@ -6,3 +6,6 @@ venv/
 .bender/
 logs/
 my_env/
+test/
+dma_log
+transcript
