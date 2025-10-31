@@ -4,14 +4,50 @@
 #include "data.h"
 
 // AXPY DOUBLE kernel: each core has its chunk to compute
-void axpy_double(uint32_t start, uint32_t end, double a, double volatile *x,
-                 double volatile *y, double volatile *z) {
+void axpy_double(uint32_t start, uint32_t chunk, double a,
+               double *x, double *y, double *z,
+               uint64_t *start_cycle, uint64_t *end_cycle) {
 
-    for (uint32_t i = start; i < end; i++) {
-        z[i] = a * x[i] + y[i];
+    uint32_t core_idx = snrt_cluster_core_idx();
+    
+    snrt_cluster_hw_barrier(); // Sincronizza i core
+    
+    // Each core allocates its share of TCDM decided by the size of chunk
+    double *local_x = (double *)snrt_l1_next();
+    double *local_y = local_x + chunk;
+    double *local_z = local_y + chunk;
+
+    
+    // DM core loads the vectors from the start of each core
+    if (snrt_is_dm_core()) {
+        snrt_dma_start_1d(local_x, x+start, chunk * sizeof(double));
+        snrt_dma_start_1d(local_y, y+start, chunk * sizeof(double));
+        snrt_dma_wait_all(); 
     }
-    // Synchronize the FPUs
-    snrt_fpu_fence();
+    
+    snrt_cluster_hw_barrier(); // Sincronizza i core
+
+    if (snrt_is_compute_core()) {
+
+        *start_cycle = snrt_mcycle();
+        for (uint32_t i = 0; i < chunk; i++) {
+            local_z[i] = a * local_x[i] + local_y[i];
+            //printf("Core %d %f\n",snrt_cluster_core_idx(), local_x[i]);
+        }
+        *end_cycle = snrt_mcycle();
+        
+        // Synchronize the FPUs
+        snrt_fpu_fence();
+    }
+  
+    snrt_cluster_hw_barrier(); // Sincronizza prima di scrivere
+
+    // Ogni core copia il proprio risultato
+    if (snrt_is_compute_core()) {
+        for (uint32_t i = 0; i < chunk; i++) {
+            z[i] = local_z[i];
+        }
+    }
 }
 
 int main() {
@@ -37,30 +73,14 @@ int main() {
     uint32_t chunk = L / ncores;
     // From where to where?
     uint32_t start = core_idx * chunk;
-    uint32_t end   = (core_idx == ncores - 1) ? L : start + chunk;
 
-    // Compute cores work
-    if (snrt_is_compute_core()) {
-
-        //Warm up the cache
-        for(volatile int i =0; i<2; i++){
-            axpy_double(start, end, a, x, y, z);
-        }
+    uint64_t start_cycle,end_cycle;
+    axpy_double(start, chunk, a, x, y, z, &start_cycle, &end_cycle);
         
-        if(core_idx==0){
-            printf("Cache is warm!\n");
-        }
-
-        // Start counting the cycles and call the kernel
-        uint64_t start_cycle = snrt_mcycle();
-        axpy_double(start, end, a, x, y, z);
-        uint64_t end_cycle = snrt_mcycle();
-
-        // Performance
-        cyclesc[core_idx] = (end_cycle - start_cycle);
-        cycles_elementc[core_idx] = (double) cyclesc[core_idx] / (double) chunk;
-        flop_cyclec[core_idx] = 2.0 * (double) chunk / (double) cyclesc[core_idx];
-    }
+    // Performance
+    cyclesc[core_idx] = (end_cycle - start_cycle);
+    cycles_elementc[core_idx] = (double) cyclesc[core_idx] / (double) chunk;
+    flop_cyclec[core_idx] = 2.0 * (double) chunk / (double) cyclesc[core_idx];
 
     snrt_cluster_hw_barrier();
 
@@ -80,12 +100,15 @@ int main() {
         cycles_elemean /= ncores;
         double flopc = flopcpercluster / ncores;
 
-        printf("AXPY performance\n");
+        printf("AXPY %d performance\n", L);
         printf("Mean cycles %.0f \n", cycles_mean);
         printf("Mean cycles/element %.02f \n", cycles_elemean);
         printf("Mean FLOP/cycle %.5f \n", flopc);
         printf("FLOP/cycle per cluster %.5f \n", flopcpercluster);
-        printf("z[0]=%.2f z[L-1]=%.2f\n", z[0], z[L-1]);
+        for(uint32_t i=0; i<L; i++){
+            printf("z[%d]=%.2f \n",i, z[i]);
+        }
+        
     }
 
     return 0;

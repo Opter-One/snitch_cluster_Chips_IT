@@ -94,7 +94,7 @@ int main(){
             
 
             if(TCDM_en){
-                setup_ssrs_dotp(chunk,local_A+start,local_B+start);
+                //setup_ssrs_dotp(chunk,local_A+start,local_B+start);
                 snrt_ssr_enable();
 
                 //Read the cycles
@@ -104,7 +104,7 @@ int main(){
 
             }else{
 
-                setup_ssrs_dotp(chunk,&A,&B);
+                //setup_ssrs_dotp(chunk,A,B);
                 snrt_ssr_enable();
 
                 for(uint32_t i=0; i<2; i++){
