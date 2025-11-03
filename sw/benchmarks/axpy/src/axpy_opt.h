@@ -1,9 +1,7 @@
 // Luca Colombo 2025 Chips-IT
 //Optimized version with SSRs and FREP operation
 
-
-
-void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum){
+void axpy_opt(uint32_t chunk, float *a, float *b, float *axpy, float c){
     // Start of SSR region.
     // Declare the registers
     register volatile float ft0 asm("ft0");
@@ -22,18 +20,18 @@ void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum){
     // Read from ft0 and ft1 that will be wired to a and b 
     snrt_ssr_read(SNRT_SSR_DM0, SNRT_SSR_1D, a); //ft0
     snrt_ssr_read(SNRT_SSR_DM1, SNRT_SSR_1D, b); //ft1
-    // Write to ft2 (sum)
-    snrt_ssr_write(SNRT_SSR_DM2, SNRT_SSR_1D, sum);
+    // Write to ft2 (axpy)
+    snrt_ssr_write(SNRT_SSR_DM2, SNRT_SSR_1D, axpy);
 
     // Enable the SSRs
     snrt_ssr_enable();
 
-    // Assembly code to add the ft0 and ft1 to ft2
+    // Assembly code to add the c*ft0 and ft1 to ft2
     asm volatile(
         "frep.o %[n_frep], 1, 0, 0 \n"
-        "fadd.s ft2, ft0, ft1\n"
+        "fmadd.s ft2, %[c], ft0, ft1\n"
         :
-        : [ n_frep ] "r"(chunk - 1)
+        : [ n_frep ] "r"(chunk - 1), [ c ] "f"(c)
         : "ft0", "ft1", "ft2", "memory");
 
     snrt_fpu_fence();

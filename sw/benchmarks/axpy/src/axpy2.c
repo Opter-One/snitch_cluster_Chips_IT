@@ -1,26 +1,26 @@
 // Luca Colombo 2025 Chips-IT
 #include "snrt.h"
 #include "data.h"
-#include "vect_opt.h"
+#include "axpy_opt.h"
 
 // Global cycles 
-uint64_t start_cycle[8],end_cycle[8], total_cycles[8];
+uint64_t start_cycle[16],end_cycle[16], total_cycles[16];
 
 // Global chunks
 
 uint32_t core_chunk[16];
 
 // Pointers for each core to TCDM
-float *local_a, *local_b, *local_sum;
+float *local_a, *local_b, *local_axpy;
 
 //Flag to use simple or optimized kernel
 bool use_optimized = 0;
 
 // Simple kernel with no use of FREP and SSRs
-void vect_add_simple(uint32_t chunk, float *a, float *b, float *sum){
+void axpy_simple(uint32_t chunk, float *a, float *b, float *axpy, float c){
 
     for(uint32_t i= 0; i<chunk; i++){
-        sum[i] = a[i] + b [i];
+        axpy[i] = c* a[i] + b [i];
     }
     snrt_fpu_fence();
     return;
@@ -55,19 +55,19 @@ int main(){
         for(uint32_t i = 0; i<length; i++){
             a[i] = (float)i;
             b[i] = (float)i;
-            sum[i] = 0.0;
+            axpy[i] = 0.0;
         }
         // Initialize the pointers for each core (also dm, could be removed?)
         local_a = (float *)snrt_l1_next();
         local_b = local_a + length;
-        local_sum = local_b + length;
+        local_axpy = local_b + length;
         // Allocate the vectors in memory, for each chunk (core)
         for(uint32_t cid = 0; cid<ncores; cid++){
             uint32_t offset = cid * base_chunk;
 
             snrt_dma_start_1d(local_a + offset, a + offset, core_chunk[cid]*sizeof(float));
             snrt_dma_start_1d(local_b + offset, b + offset, core_chunk[cid]*sizeof(float));
-            snrt_dma_start_1d(local_sum + offset, sum + offset, core_chunk[cid]*sizeof(float));
+            snrt_dma_start_1d(local_axpy + offset, axpy + offset, core_chunk[cid]*sizeof(float));
             
             snrt_dma_wait_all();
         }
@@ -84,14 +84,14 @@ int main(){
         // operations are performed on the chunk of each core
         if(use_optimized){
             start_cycle[core_idx] = snrt_mcycle();
-            vect_add_opt(core_chunk[core_idx], local_a + offset_core, local_b + offset_core,
-                 local_sum + offset_core);
+            axpy_opt(core_chunk[core_idx], local_a + offset_core, local_b + offset_core,
+                 local_axpy + offset_core,c);
             end_cycle[core_idx] = snrt_mcycle();
         }
         else{
             start_cycle[core_idx] = snrt_mcycle();
-            vect_add_simple(core_chunk[core_idx], local_a + offset_core, local_b + offset_core,
-                 local_sum + offset_core);
+            axpy_simple(core_chunk[core_idx], local_a + offset_core, local_b + offset_core,
+                 local_axpy + offset_core,c);
             end_cycle[core_idx] = snrt_mcycle();
         }
     }
@@ -100,7 +100,7 @@ int main(){
 
     if(snrt_is_dm_core()){
         // Copy back from TCDM for each core result
-        snrt_dma_start_1d(sum, local_sum, length*sizeof(float));
+        snrt_dma_start_1d(axpy, local_axpy, length*sizeof(float));
         snrt_dma_wait_all();
     }
     
@@ -114,19 +114,19 @@ int main(){
         for(uint32_t i = 0; i<ncores; i++){
             total_cycles[i] = end_cycle[i] - start_cycle[i];
             avg_cycles += total_cycles[i];
-            avg_flop_cycle += 1 * core_chunk[i] / (float) total_cycles[i]; // 1 floating op per element
+            avg_flop_cycle += 2 * core_chunk[i] / (float) total_cycles[i]; // 1 floating op per element
         }
         avg_cycles /= ncores;
         avg_flop_cycle /= ncores;
         float avg_flop_cycle_general = (float)length / (float)avg_cycles;
 
-        printf("Vector %d add performance \n", length);
+        printf("AXPY %d add performance \n", length);
         printf("Avg. cycle %d and avg. flop/cycle per core %f and general %f \n",
              avg_cycles, avg_flop_cycle,avg_flop_cycle_general);
         
         if(length < 16){
             for(uint32_t i = 0; i < length; i++){
-                printf("Result %d: %f\n", i, sum[i]);
+                printf("Result %d: %f\n", i, axpy[i]);
             }
         }
     }
