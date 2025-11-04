@@ -1,9 +1,10 @@
 // Luca Colombo 2025 Chips-IT
 //Optimized version with SSRs and FREP operation
 
+#include "snrt.h"
 
-
-void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum){
+void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum, 
+    uint64_t* start_cycle,uint64_t *end_cycle){
     // Start of SSR region.
     // Declare the registers
     register volatile float ft0 asm("ft0");
@@ -12,7 +13,7 @@ void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum){
 
     // Declare the registers as volatile to avoid compiler optimization (i think)
     asm volatile("" : "=f"(ft0), "=f"(ft1), "=f"(ft2));
-
+    
     // Setup the 1d loop with ssr (tell which strems to use, the size and the size of
     // the elements)
     snrt_ssr_loop_1d(SNRT_SSR_DM0, chunk, sizeof(float));
@@ -25,6 +26,7 @@ void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum){
     // Write to ft2 (sum)
     snrt_ssr_write(SNRT_SSR_DM2, SNRT_SSR_1D, sum);
 
+    *start_cycle = snrt_mcycle();
     // Enable the SSRs
     snrt_ssr_enable();
 
@@ -35,9 +37,13 @@ void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum){
         :
         : [ n_frep ] "r"(chunk - 1)
         : "ft0", "ft1", "ft2", "memory");
-
-    snrt_fpu_fence();
+    
     snrt_ssr_disable();
+    
+    snrt_fpu_fence();
+
+    *end_cycle = snrt_mcycle();
+    
     return;
 }
 

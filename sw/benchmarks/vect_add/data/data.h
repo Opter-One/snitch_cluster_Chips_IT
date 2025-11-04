@@ -1,10 +1,13 @@
 #ifndef DATA_H
 #define DATA_H
 
-#ifndef length
-#define length 8
+#ifndef L_vec
+#define L_vec 8
 #endif
 
-float a[length],b[length],sum[length];
+float a[L_vec],b[L_vec],sum[L_vec];
 
+//Performance 
+uint64_t cyclesc[16];
+float cycles_elementc[16],flop_cyclec[16];
 #endif

@@ -124,7 +124,7 @@ int main(){
         printf("Avg. cycle %d and avg. flop/cycle per core %f and general %f \n",
              avg_cycles, avg_flop_cycle,avg_flop_cycle_general);
         
-        if(length < 16){
+        if(length < 17){
             for(uint32_t i = 0; i < length; i++){
                 printf("Result %d: %f\n", i, axpy[i]);
             }
