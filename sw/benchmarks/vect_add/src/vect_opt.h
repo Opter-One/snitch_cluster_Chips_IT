@@ -30,6 +30,8 @@ void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum,
     // Enable the SSRs
     snrt_ssr_enable();
 
+    snrt_fpu_fence();
+
     // Assembly code to add the ft0 and ft1 to ft2
     asm volatile(
         "frep.o %[n_frep], 1, 0, 0 \n"

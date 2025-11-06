@@ -2,7 +2,7 @@
 #define DATA_H
 
 #ifndef L_vec
-#define L_vec 8
+#define L_vec 512
 #endif
 
 float a[L_vec],b[L_vec],sum[L_vec];

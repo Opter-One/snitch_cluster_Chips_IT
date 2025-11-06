@@ -12,10 +12,10 @@ float *local_a, *local_b, *local_sum;
 
 //Flag to use simple or optimized kernel
 bool use_optimized = 1;
-//Pre load TCDM !LEAVE ON! only for baseline set to 0
+//Pre load TCDM 
 bool use_TCDM_preloading = 1;
 
-// Simple kernel with no use of FREP and SSRs
+// Simple kernel without the use of FREP and SSRs
 void vect_add_simple(uint32_t chunk, float *a, float *b, float *sum,
     uint64_t* start_cycle,uint64_t *end_cycle){
 
@@ -29,8 +29,8 @@ void vect_add_simple(uint32_t chunk, float *a, float *b, float *sum,
     return;
 }
 
-// Simple kernel with no use of FREP and SSRs and no TCDDM
-void vect_really_stupid(uint32_t start, uint32_t chunk, float *a, float *b, float *sum,
+// Simple kernel without the use of FREP and SSRs and no TCDDM
+void vect_add_naive(uint32_t start, uint32_t chunk, float *a, float *b, float *sum,
     uint64_t* start_cycle,uint64_t *end_cycle){
     
     *start_cycle = snrt_mcycle();
@@ -44,59 +44,53 @@ void vect_really_stupid(uint32_t start, uint32_t chunk, float *a, float *b, floa
 }
 
 int main(){
-    
+
     // Various metrics that will be used
     uint32_t core_idx = snrt_cluster_core_idx(); // ID number of each core
-    uint32_t ncores   = snrt_cluster_compute_core_num(); // Number of cores
+    uint32_t ncores   = snrt_cluster_compute_core_num(); // Number of cores 
+
+    uint64_t start_cycle,end_cycle; // Cycle counters
 
     uint32_t base_chunk = L_vec/ncores; // Chunk of vectors for each core (base)
-    uint32_t offset_core = core_idx * base_chunk;
-
-    snrt_cluster_hw_barrier(); // Barrier syncronization
+    uint32_t offset_core = core_idx * base_chunk; // Offset used to index the TCDM for each core
 
     // The DM core initializes the vectors and TCDM (only DM core can call DMA)
     if(snrt_is_dm_core()){
-        // Initialize the values
+
+        // Initialize the values of vectors
         for(uint32_t i = 0; i<L_vec; i++){
             a[i] = (float)i+1;
             b[i] = (float)i+1;
             sum[i] = 0.0;
         }
+
         if(use_TCDM_preloading){
-        // Initialize the pointers for each core (also dm, could be removed?)
+            // Initialize the global pointers to TCDM
             local_a = (float *)snrt_l1_next();
             local_b = local_a + L_vec;
             local_sum = local_b + L_vec;
-            // Allocate the vectors in memory, for each chunk (core)
-            for(uint32_t cid = 0; cid<ncores; cid++){
-                uint32_t offset = cid * base_chunk;
 
-                snrt_dma_start_1d(local_a + offset, a + offset, base_chunk*sizeof(float));
-                snrt_dma_start_1d(local_b + offset, b + offset, base_chunk*sizeof(float));
-                snrt_dma_start_1d(local_sum + offset, sum + offset, base_chunk*sizeof(float));
-                
-                
-            }
-            snrt_dma_wait_all();
-            printf("Cache is warm!\n");
+            // Allocate the vectors in memory
+            snrt_dma_start_1d(local_a, a, L_vec*sizeof(float));
+            snrt_dma_start_1d(local_b, b, L_vec*sizeof(float));
+            snrt_dma_start_1d(local_sum, sum, L_vec*sizeof(float));
+
+            snrt_dma_wait_all(); // Wait for completion
         }
 
     }
 
-
     snrt_cluster_hw_barrier(); // Barrier syncronization
- 
-    // Cycle counters
-    uint64_t start_cycle,end_cycle;
 
     // Compute cores do the work and call the kernel, whilst counting cycles
     if(snrt_is_compute_core()){
 
-        // Use either the simple non-optimized version declared in this file or
-        // the optimized one in the vect_opt.h file
+        // Use either the two simple non-optimized versions declared in this file or
+        // the optimized one in the vect_opt.h file.
         // We add to local_* the offset of each core, so that in the kernel all the
-        // operations are performed on the chunk of each core
+        // operations are performed on the chunk of each core, without overlapping.
         if(use_TCDM_preloading){
+
             if(use_optimized){
                 // OPTIMIZED WITH FREP;SSR;TCDM!
                 vect_add_opt(base_chunk, local_a + offset_core, local_b + offset_core,
@@ -107,15 +101,14 @@ int main(){
                 vect_add_simple(base_chunk, local_a + offset_core, local_b + offset_core,
                     local_sum + offset_core, &start_cycle, &end_cycle);
             }
-        }else{
-            // coff, not optimized
+        }
+        else{
+            // NOT OPTMIZED
             uint32_t start = core_idx * base_chunk;
-            start_cycle = snrt_mcycle();
-            vect_really_stupid(start, base_chunk, a, b, sum, &start_cycle, &end_cycle);
-            end_cycle = snrt_mcycle();
+            vect_add_naive(start, base_chunk, a, b, sum, &start_cycle, &end_cycle);        
         }
 
-        // Performance
+        // Performance, calculate the cycles for each core and other metrics
         cyclesc[core_idx] = (end_cycle - start_cycle);
         cycles_elementc[core_idx] = (float) cyclesc[core_idx] / (float) base_chunk;
         flop_cyclec[core_idx] =  (float) base_chunk / (float) cyclesc[core_idx];
@@ -123,7 +116,7 @@ int main(){
 
     snrt_cluster_hw_barrier(); // Barrier syncronization
 
-    // Copy back from TCDM for each core result only if we do not use SSRs
+    // Copy back the result from TCDM
     if(snrt_is_dm_core() && use_TCDM_preloading){
         snrt_dma_start_1d(sum, local_sum, L_vec*sizeof(float));
         snrt_dma_wait_all();
@@ -131,11 +124,14 @@ int main(){
     
     snrt_cluster_hw_barrier(); // Barrier syncronization
 
-    // Performance metrics from the core 0 (could use the DM core?)
+    // Performance metrics from the core 0 (could use the DM core or any other core)
     if(core_idx == 0){        
 
+        // Mean values of cycles, cycles per element, flop/cycle
         double cycles_mean = 0;
         double cycles_elemean = 0;
+        double flopc;
+        // Flop per cluster is the sum of flop/cycle of all cores
         double flopcpercluster = 0;
 
         for (int i = 0; i < ncores; i++) {
@@ -146,8 +142,9 @@ int main(){
 
         cycles_mean /= ncores;
         cycles_elemean /= ncores;
-        double flopc = flopcpercluster / ncores;
+        flopc = flopcpercluster / ncores;
 
+        //Print of all performance metrics
         printf("Vector add %d performance\n", L_vec);
         if(use_TCDM_preloading){printf("Using TCDM preloading!\n");}
         if(use_optimized){printf("Using SSRs and FREP!\n");}
@@ -156,6 +153,7 @@ int main(){
         printf("Mean FLOP/cycle %.5f \n", flopc);
         printf("FLOP/cycle per cluster %.5f \n", flopcpercluster);
         
+        //For small vectors print the results
         if(L_vec < 17){
             for(uint32_t i = 0; i < L_vec; i++){
                 printf("Result %d: %f\n", i, sum[i]);
