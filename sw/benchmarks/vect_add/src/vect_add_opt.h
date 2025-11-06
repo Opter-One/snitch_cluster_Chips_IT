@@ -1,5 +1,5 @@
 // Luca Colombo 2025 Chips-IT
-//Optimized version with SSRs and FREP operation
+// Optimized version with SSRs and FREP operation
 
 #include "snrt.h"
 

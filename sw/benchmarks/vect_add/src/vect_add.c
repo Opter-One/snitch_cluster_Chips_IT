@@ -1,7 +1,7 @@
 // Luca Colombo 2025 Chips-IT
 #include "snrt.h"
 #include "data.h"
-#include "vect_opt.h"
+#include "vect_add_opt.h"
 
 // Global chunks
 
@@ -105,7 +105,7 @@ int main(){
         else{
             // NOT OPTMIZED
             uint32_t start = core_idx * base_chunk;
-            vect_add_naive(start, base_chunk, a, b, sum, &start_cycle, &end_cycle);        
+            vect_add_naive(start, base_chunk, a, b, sum, &start_cycle, &end_cycle);   
         }
 
         // Performance, calculate the cycles for each core and other metrics
