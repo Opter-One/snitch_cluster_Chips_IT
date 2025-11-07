@@ -49,7 +49,7 @@ void vect_add_opt(uint32_t chunk, float *a, float *b, float *sum,
     return;
 }
 
-// The FREP instruction repeats n_frep+1 times the next set of instructions, depending on
-// the value after n_frep: in this case it is 1, so 1 instruction. The instruction is 
-// a simple floating point add. After the loop the FPUs are syncronized and SSRs are 
-// disabled.
+/* The FREP instruction repeats n_frep+1 times the next set of instructions, depending on
+ the value after n_frep: in this case it is 1, so 1 instruction. The instruction is 
+ a simple floating point add. After the loop the FPUs are syncronized and SSRs are 
+ disabled. */
