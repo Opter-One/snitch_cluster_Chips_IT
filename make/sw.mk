@@ -101,7 +101,7 @@ SN_APPS += $(SN_ROOT)/sw/kernels/misc/kbpcpa
 SN_APPS += $(SN_ROOT)/sw/kernels/misc/box3d1r
 SN_APPS += $(SN_ROOT)/sw/kernels/misc/j3d27pt
 SN_APPS += $(SN_ROOT)/sw/benchmarks/axpy
-SN_APPS += $(SN_ROOT)/sw/benchmarks/matrix_mult
+SN_APPS += $(SN_ROOT)/sw/benchmarks/test_SSR
 SN_APPS += $(SN_ROOT)/sw/benchmarks/vect_add
 endif
 
