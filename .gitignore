@@ -15,6 +15,7 @@ snitch_cluster
 verilator
 simulation
 rtl
+.rtlbinary
 # Nonfree repository
 /nonfree/**
 !/nonfree/util
