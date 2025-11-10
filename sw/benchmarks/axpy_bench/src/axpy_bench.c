@@ -1,11 +1,11 @@
 // Luca Colombo Chips-IT 2025
-/* Vector add that uses data allocated in TCDM by the DM core to feed SSR registers. 
-   Implements the add using FREP as the loop body. */
+/* AXPY Kernel that uses data allocated in TCDM by the DM core to feed SSR registers. 
+   Implements axpy using FREP as the loop body. */
 
 // Snitch runtime library
 #include "snrt.h"
 #include "data.h"
-#include "vect_add_opt.h"
+#include "axpy_opt.h"
 
 // Print first 5 and last 5 results
 bool PRINT_RESULTS = 1;
@@ -19,21 +19,20 @@ int main(){
     if(snrt_is_dm_core()){
 
         // Pointers to TCDM memory, spaced by LEN 
-        a = (double *)snrt_l1_next();
-        b = a + LEN;
-        sum = b + LEN;
+        x = (double *)snrt_l1_next();
+        y = x + LEN;
+        z = y + LEN;
 
         // If pointers are null -> break
-        if (!a || !b || !sum) {
+        if (!x || !y || !z) {
             printf("Memory allocation failed!\n");
             return -1;
         } 
 
         // Initialize the values of vectors, can change as you like
         for(uint32_t i = 0; i<LEN; i++){
-            a[i] = (double)i+1;
-            b[i] = (double)i+1;
-            sum[i] = 0.0;
+            x[i] = (double)i+1;
+            y[i] = (double)i+1;
         }
 
     }
@@ -53,12 +52,12 @@ int main(){
         uint32_t offset = core_idx*chunk_per_core;
         
         // Call the kernel
-        vect_add_opt(chunk_per_core, offset, &start_cycle[core_idx], &end_cycle[core_idx],
-                    a, b, sum);
+        axpy_opt(chunk_per_core, offset, &start_cycle[core_idx], &end_cycle[core_idx],
+                    x, y, z, a);
         
         // Performance calculations for each core
         total_cycles[core_idx] = end_cycle[core_idx]-start_cycle[core_idx];
-        flop_cycle[core_idx] = (double) chunk_per_core/ (double) total_cycles[core_idx];
+        flop_cycle[core_idx] = (double) 2 * chunk_per_core/ (double) total_cycles[core_idx];
     }
 
 
@@ -77,17 +76,17 @@ int main(){
         mean_cycles /= ncores;
         mean_flop_cycle /= ncores;
 
-        printf("Vector add %d performance\n",LEN);
+        printf("AXPY %d performance\n",LEN);
         printf("Mean cycles: %llu\n", (unsigned long long)mean_cycles);
         printf("Mean FLOP/cycle: %f\n", mean_flop_cycle);
 
         // Print results for sanity check
         if(PRINT_RESULTS){
             for(uint32_t i=0; i<5; i++){
-                printf("Sum(%d): %f\n",i, sum[i]);
+                printf("z(%d): %f\n",i, z[i]);
             }
             for(uint32_t i=LEN-5; i<LEN; i++){
-                printf("Sum(%d): %f\n",i, sum[i]);
+                printf("z(%d): %f\n",i, z[i]);
             }
         }
     }

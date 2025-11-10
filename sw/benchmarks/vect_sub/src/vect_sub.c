@@ -1,11 +1,11 @@
 // Luca Colombo Chips-IT 2025
-/* Vector add that uses data allocated in TCDM by the DM core to feed SSR registers. 
-   Implements the add using FREP as the loop body. */
+/* Vector sub that uses data allocated in TCDM by the DM core to feed SSR registers. 
+   Implements the sub using FREP as the loop body. */
 
 // Snitch runtime library
 #include "snrt.h"
 #include "data.h"
-#include "vect_add_opt.h"
+#include "vect_sub_opt.h"
 
 // Print first 5 and last 5 results
 bool PRINT_RESULTS = 1;
@@ -21,19 +21,19 @@ int main(){
         // Pointers to TCDM memory, spaced by LEN 
         a = (double *)snrt_l1_next();
         b = a + LEN;
-        sum = b + LEN;
+        sub = b + LEN;
 
         // If pointers are null -> break
-        if (!a || !b || !sum) {
+        if (!a || !b || !sub) {
             printf("Memory allocation failed!\n");
             return -1;
         } 
 
         // Initialize the values of vectors, can change as you like
         for(uint32_t i = 0; i<LEN; i++){
-            a[i] = (double)i+1;
-            b[i] = (double)i+1;
-            sum[i] = 0.0;
+            a[i] = (double)i+1.32;
+            b[i] = (double)(LEN-i);
+            sub[i] = 0.0;
         }
 
     }
@@ -53,8 +53,8 @@ int main(){
         uint32_t offset = core_idx*chunk_per_core;
         
         // Call the kernel
-        vect_add_opt(chunk_per_core, offset, &start_cycle[core_idx], &end_cycle[core_idx],
-                    a, b, sum);
+        vect_sub_opt(chunk_per_core, offset, &start_cycle[core_idx], &end_cycle[core_idx],
+                    a, b, sub);
         
         // Performance calculations for each core
         total_cycles[core_idx] = end_cycle[core_idx]-start_cycle[core_idx];
@@ -84,10 +84,10 @@ int main(){
         // Print results for sanity check
         if(PRINT_RESULTS){
             for(uint32_t i=0; i<5; i++){
-                printf("Sum(%d): %f\n",i, sum[i]);
+                printf("Sub(%d): %f\n",i, sub[i]);
             }
             for(uint32_t i=LEN-5; i<LEN; i++){
-                printf("Sum(%d): %f\n",i, sum[i]);
+                printf("Sub(%d): %f\n",i, sub[i]);
             }
         }
     }

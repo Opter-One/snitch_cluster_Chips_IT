@@ -100,9 +100,13 @@ SN_APPS += $(SN_ROOT)/sw/kernels/misc/log
 SN_APPS += $(SN_ROOT)/sw/kernels/misc/kbpcpa
 SN_APPS += $(SN_ROOT)/sw/kernels/misc/box3d1r
 SN_APPS += $(SN_ROOT)/sw/kernels/misc/j3d27pt
-SN_APPS += $(SN_ROOT)/sw/benchmarks/axpy
-SN_APPS += $(SN_ROOT)/sw/benchmarks/test_SSR
+# Benchmarks added to implement the PLAY repository #
+SN_APPS += $(SN_ROOT)/sw/benchmarks/aaa_Test_SSR
+SN_APPS += $(SN_ROOT)/sw/benchmarks/aab_Test_division
+SN_APPS += $(SN_ROOT)/sw/benchmarks/axpy_bench
 SN_APPS += $(SN_ROOT)/sw/benchmarks/vect_add
+SN_APPS += $(SN_ROOT)/sw/benchmarks/vect_sub
+SN_APPS += $(SN_ROOT)/sw/benchmarks/vect_dot
 endif
 
 # Include Makefile from each app subdirectory

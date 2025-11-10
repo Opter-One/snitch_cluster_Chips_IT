@@ -1,6 +1,6 @@
-APP              := vect_add
+APP              := aab_Test_division
 $(APP)_BUILD_DIR := $(SN_ROOT)/sw/benchmarks/$(APP)/build
-SRCS             := $(SN_ROOT)/sw/benchmarks/$(APP)/src/$(APP).c
+SRCS             := $(SN_ROOT)/sw/benchmarks/$(APP)/src/test_div.c
 $(APP)_INCDIRS   := $(SN_ROOT)/sw/benchmarks/$(APP)/data
 
 include $(SN_ROOT)/sw/kernels/common.mk
